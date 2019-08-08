@@ -1,0 +1,17 @@
+{
+    "name": "Roblox-Track-Builder-Plugin",
+    "tree": {
+        "$className": "DataModel",
+
+        "ServerStorage": {
+            "$className": "ServerStorage",
+
+            "Roblox-Track-Builder-Plugin": {
+                "$className": "Folder",
+                "PluginMain": {
+                    "$path": "src"
+                }
+            }
+        }
+    }
+}

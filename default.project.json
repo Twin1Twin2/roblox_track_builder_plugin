@@ -1,0 +1,10 @@
+{
+    "name": "Roblox-Track-Builder-Plugin",
+    "tree": {
+        "$className": "Folder",
+
+        "PluginMain": {
+            "$path": "src"
+        }
+    }
+}
