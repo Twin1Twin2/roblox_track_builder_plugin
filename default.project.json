@@ -5,6 +5,10 @@
 
         "PluginMain": {
             "$path": "src"
+        },
+
+        "roact": {
+            "$path": "modules/roact/"
         }
     }
 }

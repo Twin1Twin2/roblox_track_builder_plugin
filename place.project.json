@@ -8,8 +8,13 @@
 
             "Roblox-Track-Builder-Plugin": {
                 "$className": "Folder",
+
                 "PluginMain": {
                     "$path": "src"
+                },
+
+                "roact": {
+                    "$path": "modules/roact/"
                 }
             }
         }
