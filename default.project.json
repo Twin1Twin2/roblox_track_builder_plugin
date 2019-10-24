@@ -7,8 +7,16 @@
             "$path": "src"
         },
 
-        "roact": {
-            "$path": "modules/roact/"
+        "Roact": {
+            "$path": "modules/roact/src"
+        },
+
+        "Rodux": {
+            "$path": "modules/rodux/lib"
+        },
+
+        "RoactRodux": {
+            "$path": "modules/roact-rodux/lib"
         }
     }
 }

@@ -1,21 +1,38 @@
 {
-    "name": "Roblox-Track-Builder-Plugin",
+    "name": "Roblox-Track-Builder-Plugin-GUI",
     "tree": {
         "$className": "DataModel",
 
-        "ServerStorage": {
-            "$className": "ServerStorage",
+        "ReplicatedStorage": {
+            "$className": "ReplicatedStorage",
 
-            "Roblox-Track-Builder-Plugin": {
+            "Roblox-Track-Builder-Plugin-GUI": {
                 "$className": "Folder",
 
                 "PluginMain": {
                     "$path": "src"
                 },
 
-                "roact": {
-                    "$path": "modules/roact/"
+                "Roact": {
+                    "$path": "modules/roact/src"
+                },
+
+                "Rodux": {
+                    "$path": "modules/rodux/lib"
+                },
+
+                "RoactRodux": {
+                    "$path": "modules/roact-rodux/lib"
                 }
+            }
+        },
+
+        "StarterPlayer": {
+            "$className": "StarterPlayer",
+
+            "StarterPlayerScripts": {
+                "$className": "StarterPlayerScripts",
+                "$path": "place/StarterPlayerScripts"
             }
         }
     }
