@@ -16,6 +16,49 @@ local function IsCFrameStraightAhead(cf1, cf2)
 end
 
 
+-- taken from newsmooth tools
+    -- reformatted
+    -- use current api names for CFrame
+    -- removed heartline (not going to be used)
+--[[
+Notes:
+    b is like RailModelData
+        b.current and b.previous are like RailModelData.Offset
+
+    current and prev are current and previous track cframes
+        - end and start cframes respectively
+
+    currentCFrame and previousCFrame are the track cframes with offsets:
+        - where the rail will end and start
+--]]
+
+local ROTATION_REPS = 128
+
+local function GetApproximateZRotation(startCFrame, endCFrame)
+    local rotcurrent = b.current + Vector3.new(0,3,0)   -- why get the offset plus Vector3.new(0, 3, 0)?
+    local rotprevious = b.previous + Vector3.new(0,3,0)
+    local standardCFrame = CFrame.new((current.CFrame*CFrame.new(rotcurrent).Position)
+        :Lerp((prev.CFrame * CFrame.new(rotprevious).Position),0.5),(current.CFrame * CFrame.new(rotcurrent).Position))
+
+    local difference = (b.current + b.previous) / 2
+        - (rotcurrent + rotprevious) / 2
+    local testCFrame = CFrame.new(currentCFrame.Position:Lerp(previousCFrame.Position, 0.5), currentCFrame.Position)
+    local distance = ((testCFrame * CFrame.new(-difference)).Position - standardCFrame.Position).Magnitude
+    local rotation = 0
+
+    for i = 1, ROTATION_REPS do
+        testCFrame = testCFrame * CFrame.Angles(0,0,2 * math.pi / ROTATION_REPS)
+        local testdif = ((testCFrame*CFrame.new(-difference)).Position - standardCFrame.Position).Magnitude
+        if testdif < distance then
+            distance = testdif
+            rotation = i
+        end
+    end
+
+    return rotation * 2 * math.pi / ROTATION_REPS
+end
+
+
 local RailModelData = {
     ClassName = "RailModelData";
 }
@@ -165,6 +208,11 @@ function RailModelData:SetData(data)
     self.UseLookVector = useLookVector
     self.UseZOrientation = useZOrientation
     self.IsOptimized = isOptimized
+end
+
+
+function RailModelData:Destroy()
+
 end
 
 

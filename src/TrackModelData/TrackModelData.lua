@@ -85,17 +85,17 @@ end
 
 
 function TrackModelData:Destroy()
-    for _, railModel in pairs(self.RailModels) do
-
+    for _, railModelData in pairs(self.RailModels) do
+        railModelData:Destroy()
     end
 
-    for _, tieModel in pairs(self.TieModels) do
-
+    for _, tieModelData in pairs(self.TieModels) do
+        tieModelData:Destroy()
     end
 
-    for _, crossbeamModel in pairs(self.CrossbeamModels) do
-
-    end
+    -- for _, crossbeamModelData in pairs(self.CrossbeamModels) do
+    --     crossbeamModelData:Destroy()
+    -- end
 
     self.RailModels = nil
     self.TieModels = nil
@@ -169,7 +169,7 @@ function TrackModelData:Build(cframeTrack, startPosition, endPosition)
 
     BuildModelsFromIntervalData(self.RailModels)
     BuildModelsFromIntervalData(self.TieModels)
-    BuildModelsFromIntervalData(self.CrossbeamModels)
+    -- BuildModelsFromIntervalData(self.CrossbeamModels)
 
 
     return model

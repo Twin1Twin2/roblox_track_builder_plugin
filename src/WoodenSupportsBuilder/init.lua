@@ -1,5 +1,60 @@
 
-local CROSSBAR_WIDTH = 14.6
+
+local SupportType = {
+    Normal = function(maxSteps)
+        return {
+            type = "Normal",
+            maxSteps = maxSteps or 1
+        }
+    end,
+
+    Tri = function(maxSteps)
+        return {
+            type = "Tri",
+            MaxSteps = maxSteps or 1
+        }
+    end,
+
+    Step = function(maxSteps)
+        return {
+            type = "Step",
+            MaxSteps = maxSteps or 1
+        }
+    end,
+}
+
+
+local GenerateWoodenSupportsData = {
+    ClassName = "GenerateWoodenSupportsData";
+}
+
+GenerateWoodenSupportsData.__index = GenerateWoodenSupportsData
+
+
+function GenerateWoodenSupportsData.new()
+    local self = setmetatable({}, GenerateWoodenSupportsData)
+
+    self.CFrameTrack = nil  -- CFrameTrack
+    self.StartPosition = 0
+    self.EndPosition = 0
+
+    self.SupportInterval = 14
+    self.SupportWidth = 14
+    self.StepHeight = 14
+
+    self.CrossbarColor = Color3.fromRGB(124, 92, 70)
+    self.SupportColor = Color3.fromRGB(124, 92, 70)
+
+    self.LeftSupportType = SupportType.Normal()
+    self.RightSupportType = SupportType.Normal()
+
+    self.HasCatwalks = false
+    self.FloorCollisions = {}
+
+
+    return self
+end
+
 
 local function GetCFrameWithoutVerticalAngle(cframe)
     local x, y, z, _, _, m02, m10, m11, _, _, _, m22 = cframe:components()
@@ -12,14 +67,14 @@ local function GetCFrameWithoutVerticalAngle(cframe)
 end
 
 
-local function BuildCrossbar(cframe, colors, parent)    -- crossbar?
+local function BuildTrackCrossbar(cframe, color, parent)    -- crossbar?
     local bent = Instance.new("Part",workspace)
-        bent.Name = "Bent"
+        bent.Name = "TrackCrossbar"
         bent.Anchored = true
         bent.CanCollide = false
         bent.Size = Vector3.new(18, 2, 0.6) --normally 18.8
         bent.Material=Enum.Material.Wood
-        bent.Color = colors.Support
+        bent.Color = color
         bent.TopSurface = Enum.SurfaceType.Smooth
         bent.BottomSurface = Enum.SurfaceType.Smooth
         -- bentcf1 = bent.CFrame * CFrame.new(4,0,0)
@@ -36,7 +91,7 @@ end
 
 -- it's not moving circular
 -- move within a square
-local function BuildSecondCrossbar(cframe, colors, parent)    -- crossbar?
+local function BuildLevelCrossbar(cframe, color, parent)    -- crossbar?
     -- when angle is 0
         -- offset X = 0, Y = -2, Z = 0
     -- when angle is 90
@@ -70,12 +125,12 @@ local function BuildSecondCrossbar(cframe, colors, parent)    -- crossbar?
         * CFrame.new(xValue, 0, 0)
 
     local bent = Instance.new("Part", workspace)
-        bent.Name = "SecondBent"
+        bent.Name = "LevelCrossbar"
         bent.Anchored = true
         bent.CanCollide = false
         bent.Size = Vector3.new(14.6, 2, 0.6) --normally 18.8
         bent.Material=Enum.Material.Wood
-        bent.Color = colors.Support
+        bent.Color = color
         bent.TopSurface = Enum.SurfaceType.Smooth
         bent.BottomSurface = Enum.SurfaceType.Smooth
         -- bentcf1 = bent.CFrame * CFrame.new(4,0,0)
@@ -88,22 +143,22 @@ local function BuildSecondCrossbar(cframe, colors, parent)    -- crossbar?
 end
 
 
-local function BuildCrossbars(cframe, colors, parent)
+local function BuildCrossbars(cframe, color, parent)
     local _cframe = GetCFrameWithoutVerticalAngle(cframe)
     local _, _, _, _, _, _, m10, m11, _, _, _, _ = _cframe:components()
     local angle = math.atan2(m10, m11)
 
-    local crossbarCFrame = BuildCrossbar(_cframe, colors, parent)
+    local crossbarCFrame = BuildTrackCrossbar(_cframe, color, parent)
 
     if (math.abs(angle) > math.rad(5) or m11 < 0) then
-        crossbarCFrame = BuildSecondCrossbar(_cframe, colors, parent)
+        crossbarCFrame = BuildLevelCrossbar(_cframe, color, parent)
     end
 
     return crossbarCFrame
 end
 
 
-local function BuildVerticalSupportBeam(cframe, collisions, colors, parent)
+local function BuildVerticalSupportBeam(cframe, collisions, color, parent)
     local startPosition = cframe.Position
 
     -- draw ray
@@ -124,7 +179,7 @@ local function BuildVerticalSupportBeam(cframe, collisions, colors, parent)
         supportBeam.Anchored = true
         supportBeam.Size = Vector3.new(0.6, height, 0.6)
         supportBeam.Material = Enum.Material.Wood
-        supportBeam.Color = colors.Support
+        supportBeam.Color = color
         supportBeam.TopSurface = Enum.SurfaceType.Smooth
         supportBeam.BottomSurface = Enum.SurfaceType.Smooth
 
@@ -152,13 +207,13 @@ local function BuildVerticalSupportBeam(cframe, collisions, colors, parent)
 end
 
 
-local function BuildHorizontalInsideBeam(cframe, colors, parent)
+local function BuildHorizontalInsideBeam(cframe, color, parent)
     local beam = Instance.new("Part")
         beam.Size = Vector3.new(14.6, 1, 0.4)
         beam.Anchored = true
         beam.CanCollide = false
         beam.Material = Enum.Material.Wood
-        beam.Color = colors.Support
+        beam.Color = color
         beam.TopSurface = Enum.SurfaceType.Smooth
         beam.BottomSurface = Enum.SurfaceType.Smooth
         beam.Name = "HorizontalInsideBeam1"
@@ -174,7 +229,7 @@ local function BuildHorizontalInsideBeam(cframe, colors, parent)
 end
 
 
-local function BuildHorizontalInsideBeams(crossbarCFrame, supportHeight, colors, parent)
+local function BuildHorizontalInsideBeams(crossbarCFrame, supportHeight, color, parent)
     local position = crossbarCFrame.Position
     local maxHeight = position.Y
     local heightIncrement = 14
@@ -191,18 +246,18 @@ local function BuildHorizontalInsideBeams(crossbarCFrame, supportHeight, colors,
         or (startHeight - modStartHeight + heightIncrement)
 
     while (maxHeight - currentHeight > 2) do
-        BuildHorizontalInsideBeam(GetHeightCFrame(currentHeight), colors, parent)
+        BuildHorizontalInsideBeam(GetHeightCFrame(currentHeight), color, parent)
         currentHeight = currentHeight + heightIncrement
     end
 end
 
 
-local function BuildInsideCrossbeam(topCFrame, bottomCFrame, colors, parent)
+local function BuildInsideCrossbeam(topCFrame, bottomCFrame, color, parent)
     local beam = Instance.new("Part")
         beam.Anchored = true
         beam.CanCollide = false
         beam.Material = Enum.Material.Wood
-        beam.Color = colors.Support
+        beam.Color = color
         beam.TopSurface = Enum.SurfaceType.Smooth
         beam.BottomSurface = Enum.SurfaceType.Smooth
         beam.Name = "InsideCrossbeam2"
@@ -229,7 +284,7 @@ local function BuildInsideCrossbeam(topCFrame, bottomCFrame, colors, parent)
 end
 
 
-local function BuildInsideCrossbeams(crossbarCFrame, supportHeight, colors, parent)
+local function BuildInsideCrossbeams(crossbarCFrame, supportHeight, color, parent)
     local position = crossbarCFrame.Position
     local maxHeight = position.Y
     local heightIncrement = 14  -- const for now
@@ -256,7 +311,7 @@ local function BuildInsideCrossbeams(crossbarCFrame, supportHeight, colors, pare
             BuildInsideCrossbeam(
                 GetHeightCFrame(lastHeight),
                 GetHeightCFrame(_currentHeight),
-                colors,
+                color,
                 parent
             )
         end
@@ -267,16 +322,20 @@ local function BuildInsideCrossbeams(crossbarCFrame, supportHeight, colors, pare
 end
 
 
-local function BuildSupport(cframe, collisions, colors)
+local function BuildSupport(cframe, generationData)
     local model = Instance.new("Model")
 
-    local levelCrossbarCFrame = BuildCrossbars(cframe, colors, model)
+    local crossbarColor = generationData.CrossbarColor
+    local supportColor = generationData.SupportColor
+    local collisions = generationData.FloorCollisions
+
+    local levelCrossbarCFrame = BuildCrossbars(cframe, crossbarColor, model)
 
     local leftSupportTopCFrame = levelCrossbarCFrame * CFrame.new(7, 0, 0)
     local leftHeight = BuildVerticalSupportBeam(
         leftSupportTopCFrame,
         collisions,
-        colors,
+        supportColor,
         model
     )
 
@@ -284,14 +343,25 @@ local function BuildSupport(cframe, collisions, colors)
     local rightHeight = BuildVerticalSupportBeam(
         rightSupportTopCFrame,
         collisions,
-        colors,
+        supportColor,
         model
     )
-    BuildHorizontalInsideBeams(levelCrossbarCFrame, math.min(leftHeight, rightHeight), colors, model)
-    BuildInsideCrossbeams(levelCrossbarCFrame, math.min(leftHeight, rightHeight), colors, model)
+    BuildHorizontalInsideBeams(
+        levelCrossbarCFrame,
+        math.min(leftHeight, rightHeight),
+        supportColor,
+        model
+    )
+    BuildInsideCrossbeams(
+        levelCrossbarCFrame,
+        math.min(leftHeight, rightHeight),
+        supportColor,
+        model
+    )
 
     local supportData = {
         LevelCrossbarCFrame = levelCrossbarCFrame;
+
         -- left vertical support beam data
         LeftMainSupportHeight = leftHeight;
         LeftMainSupportTopCFrame = leftSupportTopCFrame;
@@ -307,12 +377,12 @@ end
 
 
 
-local function BuildHorizontalOutsideBeam(startCFrame, endCFrame, colors, parent)
+local function BuildHorizontalOutsideBeam(startCFrame, endCFrame, color, parent)
     local beam = Instance.new("Part")
         beam.Anchored = true
         beam.CanCollide = false
         beam.Material = Enum.Material.Wood
-        beam.Color = colors.Support
+        beam.Color = color
         beam.TopSurface = Enum.SurfaceType.Smooth
         beam.BottomSurface = Enum.SurfaceType.Smooth
         beam.Name = "HorizontalOutsideBeam"
@@ -347,7 +417,7 @@ local function GetIncrementStartHeight(height, increment, padding)
 end
 
 
-local function BuildHorizontalOutsideBeams(startCFrame, startHeight, endCFrame, endHeight, colors, parent)
+local function BuildHorizontalOutsideBeams(startCFrame, startHeight, endCFrame, endHeight, color, parent)
     local maxStartHeight = startCFrame.Position.Y + 1.2
     local getStartYPositionCFrame = GetYPositionCFrameFunction(startCFrame)
 
@@ -369,7 +439,7 @@ local function BuildHorizontalOutsideBeams(startCFrame, startHeight, endCFrame, 
         BuildHorizontalOutsideBeam(
             getStartYPositionCFrame(startCurrentHeight),
             getEndYPositionCFrame(endCurrentHeight),
-            colors,
+            color,
             parent
         )
 
@@ -379,15 +449,17 @@ local function BuildHorizontalOutsideBeams(startCFrame, startHeight, endCFrame, 
 end
 
 
-local function BuildBrace(startSupportData, endSupportData, colors)
+local function BuildBrace(startSupportData, endSupportData, generationData)
     local model = Instance.new("Model")
+
+    local supportColor = generationData.SupportColor
 
     BuildHorizontalOutsideBeams(    -- left
         startSupportData.LeftMainSupportTopCFrame,
         startSupportData.LeftMainSupportHeight,
         endSupportData.LeftMainSupportTopCFrame,
         endSupportData.LeftMainSupportHeight,
-        colors,
+        supportColor,
         model
     )
 
@@ -396,7 +468,7 @@ local function BuildBrace(startSupportData, endSupportData, colors)
         startSupportData.RightMainSupportHeight,
         endSupportData.RightMainSupportTopCFrame,
         endSupportData.RightMainSupportHeight,
-        colors,
+        supportColor,
         model
     )
 
@@ -404,23 +476,19 @@ local function BuildBrace(startSupportData, endSupportData, colors)
 end
 
 
-local function GenerateWoodenSupports(cframeTrack, startPosition, endPosition, interval, floorCollision)
-    assert(startPosition < endPosition)
-    interval = interval or 20
+local function GenerateWoodenSupports(generationData)
+    local cframeTrack = generationData.CFrameTrack
+    local startPosition = generationData.StartPosition
+    local endPosition = generationData.EndPosition
+    local supportInterval = generationData.SupportInterval
 
     local model = Instance.new("Model")
     model.Name = "WoodenSupports"
 
     local index = 1
-    local colors = {
-        Support = Color3.fromRGB(124, 92, 70);
-    }
-    local collisions = {
-        workspace:FindFirstChild("Baseplate")
-    }
 
     local function GenerateSupport(cframe)
-        local supportModel, supportData = BuildSupport(cframe, collisions, colors)
+        local supportModel, supportData = BuildSupport(cframe, generationData)
         supportModel.Name = tostring(index)
         supportModel.Parent = model
 
@@ -428,7 +496,7 @@ local function GenerateWoodenSupports(cframeTrack, startPosition, endPosition, i
     end
 
     local function GenerateBrace(startSupportData, endSupportData)
-        local braceModel = BuildBrace(startSupportData, endSupportData, colors)
+        local braceModel = BuildBrace(startSupportData, endSupportData, generationData)
         braceModel.Name = tostring(index)
         braceModel.Parent = model
     end
@@ -436,20 +504,21 @@ local function GenerateWoodenSupports(cframeTrack, startPosition, endPosition, i
     local lastPosition = startPosition
     local lastCFrame = cframeTrack:GetCFramePosition(lastPosition)
 
-    --- Get CFrame that is within
+    --- Get CFrame that is within Magnitude of supportInterval
     -- return CFrame, double
-    local function GetTrackCFrameXZMagnitudeFromCFrame(cframe, position)
+    local function GetTrackCFrameXZMagnitudeFromCFrame(cframe, trackPosition)
         local cframeVector2 = Vector2.new(cframe.Position.X, cframe.Position.Z)
-        local currentCFrame
-        local currentPosition = position + interval
+        local currentPosition = trackPosition + supportInterval
+        local currentCFrame = cframeTrack:GetCFramePosition(currentPosition)
         local numLoops = 0
 
-        repeat
+        while not ((Vector2.new(currentCFrame.Position.X, currentCFrame.Position.Z)
+            - cframeVector2).Magnitude >= supportInterval
+            or numLoops >= 250) do
             currentPosition = currentPosition + 0.1
             currentCFrame = cframeTrack:GetCFramePosition(currentPosition)
             numLoops = numLoops + 1
-        until ((Vector2.new(currentCFrame.Position.X, currentCFrame.Position.Z)
-            - cframeVector2).Magnitude or numLoops >= 250)
+        end
 
         return currentCFrame, currentPosition
     end
@@ -483,4 +552,11 @@ local function GenerateWoodenSupports(cframeTrack, startPosition, endPosition, i
 end
 
 
-return GenerateWoodenSupports
+local WoodenSupportsBuilder = {}
+
+WoodenSupportsBuilder.SupportType = SupportType
+WoodenSupportsBuilder.Data = GenerateWoodenSupportsData
+
+WoodenSupportsBuilder.Generate = GenerateWoodenSupports
+
+return WoodenSupportsBuilder

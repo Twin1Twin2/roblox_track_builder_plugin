@@ -6,7 +6,7 @@ local Selection = game:GetService("Selection")
 local CreateTrackFromInstanceData = require(script.Parent.CFrameTrack.CreateCFrameTrackFromInstanceData)
 local Actions = require(script.Parent.Actions)
 
-local GenerateWoodenSupports = require(script.Parent.GenerateWoodenSupports)
+local WoodenSupportsBuilder = require(script.Parent.WoodenSupportsBuilder)
 
 
 local PluginTrackManager = {
@@ -59,16 +59,18 @@ end
 
 function PluginTrackManager:SetCurrentTrack(trackUID)
     local trackName
+    local trackLength = 0
 
     if (trackUID ~= nil) then
         local cframeTrack = self.Tracks[trackUID]
         assert(cframeTrack, "Unable to get track with TrackUID " .. tostring(trackUID))
 
         trackName = cframeTrack.Name
+        trackLength = cframeTrack.Length
     end
 
     self.CurrentTrack = trackUID
-    self.Store:dispatch(Actions.SetCurrentTrack(trackUID, trackName))
+    self.Store:dispatch(Actions.SetCurrentTrack(trackUID, trackName, trackLength))
 end
 
 
@@ -127,7 +129,15 @@ function PluginTrackManager:GenerateWoodenSupports()
         return
     end
 
-    local model = GenerateWoodenSupports(currentTrack, 0, currentTrack.Length)
+    local generateData = WoodenSupportsBuilder.Data.new()
+        generateData.CFrameTrack = currentTrack
+        generateData.StartPosition = 0
+        generateData.EndPosition = currentTrack.Length
+        generateData.FloorCollisions = {
+            workspace:FindFirstChild("Baseplate")
+        }
+
+    local model = WoodenSupportsBuilder.Generate(generateData)
     model.Parent = workspace
     Selection:Set({model})
 end

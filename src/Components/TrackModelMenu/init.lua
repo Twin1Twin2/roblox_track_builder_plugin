@@ -116,7 +116,7 @@ function TrackModelMenu:render()
                         "TextBox",
                         {
                             -- props
-                            Size = UDim2.new(0.5, 0, 1, 0);
+                            Size = UDim2.new(0.5, -16, 1, 0);
                             Position = UDim2.new(0.5, 0, 0, 0);
                             Text = tostring(props.trackModelBuildRangeState.End);
 
@@ -137,6 +137,23 @@ function TrackModelMenu:render()
                             end,
                         }
                     ),
+
+                    SetRangeEndToTrackEndButton = cE(
+                        "ImageButton",
+                        {
+                            Size = UDim2.new(16, 0, 1, 0);
+                            Position = UDim2.new(1, -16, 0, 0);
+
+                            BackgroundColor3 = Color3.fromRGB(50, 50, 50);
+                            BorderSizePixel = 0;
+
+                            Image = "rbxasset://textures/ui/AvatarContextMenu_Arrow.png";
+
+                            [Roact.Event.MouseButton1Click] = function()
+                                props.setBuildRange(nil, props.currentTrackState.trackLength)
+                            end;
+                        }
+                    )
                 }
             )
         }
@@ -146,6 +163,7 @@ end
 
 local function mapStateToProps(state, props)
     return {
+        currentTrackState = state.CurrentTrack,
         currentTrackModelState = state.CurrentTrackModel,
         trackModelBuildRangeState = state.TrackModelBuildRange
     }
