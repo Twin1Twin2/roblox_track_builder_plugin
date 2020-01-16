@@ -1,0 +1,6 @@
+std = "roblox"
+
+[config]
+parenthese_conditions = "allow"
+empty_if = { comments_count = false }
+unused_variable = { allow_unused_self = true }
