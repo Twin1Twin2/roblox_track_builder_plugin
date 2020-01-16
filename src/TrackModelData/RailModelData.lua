@@ -3,6 +3,7 @@ local Utilities = script.Parent.Utilities
 
 local GetCFrameFromObject = require(Utilities.GetCFrameFromObject)
 local GetLookVectorCFrame = require(Utilities.GetLookVectorCFrame)
+local GetMidZOrientation = require(Utilities.GetMidZOrientation)
 
 
 local MINIMUM_ZERO_ANGLE = 0.99995
@@ -34,21 +35,24 @@ Notes:
 
 local ROTATION_REPS = 128
 
-local function GetApproximateZRotation(startCFrame, endCFrame)
-    local rotcurrent = b.current + Vector3.new(0,3,0)   -- why get the offset plus Vector3.new(0, 3, 0)?
-    local rotprevious = b.previous + Vector3.new(0,3,0)
-    local standardCFrame = CFrame.new((current.CFrame*CFrame.new(rotcurrent).Position)
-        :Lerp((prev.CFrame * CFrame.new(rotprevious).Position),0.5),(current.CFrame * CFrame.new(rotcurrent).Position))
+local function GetApproximateZRotation(startCFrame, endCFrame, buildStartOffset, buildEndOffset)
+    local rotcurrent = buildEndOffset + Vector3.new(0, 3, 0)   -- why get the offset plus Vector3.new(0, 3, 0)?
+    local rotprevious = buildStartOffset + Vector3.new(0, 3, 0)
+    local standardCFrame = CFrame.new(
+        (endCFrame * CFrame.new(rotcurrent).Position)
+            :Lerp((startCFrame * CFrame.new(rotprevious).Position), 0.5),
+        (endCFrame * CFrame.new(rotcurrent).Position)
+    )
 
-    local difference = (b.current + b.previous) / 2
+    local difference = (buildEndOffset + buildStartOffset) / 2
         - (rotcurrent + rotprevious) / 2
-    local testCFrame = CFrame.new(currentCFrame.Position:Lerp(previousCFrame.Position, 0.5), currentCFrame.Position)
+    local testCFrame = CFrame.new(endCFrame.Position:Lerp(startCFrame.Position, 0.5), endCFrame.Position)
     local distance = ((testCFrame * CFrame.new(-difference)).Position - standardCFrame.Position).Magnitude
     local rotation = 0
 
     for i = 1, ROTATION_REPS do
-        testCFrame = testCFrame * CFrame.Angles(0,0,2 * math.pi / ROTATION_REPS)
-        local testdif = ((testCFrame*CFrame.new(-difference)).Position - standardCFrame.Position).Magnitude
+        testCFrame = testCFrame * CFrame.Angles(0, 0, 2 * math.pi / ROTATION_REPS)
+        local testdif = ((testCFrame * CFrame.new(-difference)).Position - standardCFrame.Position).Magnitude
         if testdif < distance then
             distance = testdif
             rotation = i
@@ -212,7 +216,9 @@ end
 
 
 function RailModelData:Destroy()
+    self.BasePart = nil
 
+    setmetatable(self, nil)
 end
 
 
@@ -243,11 +249,21 @@ function RailModelData:Build(startCFrame, endCFrame, colorData)
     local newCFrame = CFrame.new(startPosition:Lerp(endPosition, 0.5), endPosition)
 
     if (self.UseZOrientation == true) then
-        local startZAngle = GetZAngleOfCFrame(startCFrame)
-        local endZAngle = GetZAngleOfCFrame(endCFrame)
+        -- local startZAngle = GetZAngleOfCFrame(startCFrame)
+        -- local endZAngle = GetZAngleOfCFrame(endCFrame)
 
-        local zRotation = (startZAngle + endZAngle) / 2
-        newCFrame = newCFrame * CFrame.Angles(0, 0, zRotation)
+        -- local zRotation = (startZAngle + endZAngle) / 2
+
+        -- local zRotation = GetApproximateZRotation(
+        --     startCFrame,
+        --     endCFrame,
+        --     self.Offset,
+        --     self.Offset
+        -- )
+
+        local zRotation = GetMidZOrientation(startCFrame, endCFrame, newCFrame)
+
+        newCFrame = newCFrame * CFrame.fromOrientation(0, 0, zRotation) --* CFrame.Angles(-math.pi / 2, 0, 0)
     end
 
     local basePartSize = basePart.Size
@@ -377,7 +393,13 @@ function RailModelData:BuildModelsFromTrack(cframeTrack, startPosition, endPosit
     assert(startPosition < endPosition)
 
     if (self.IsOptimized == true) then
-        return self:_BuildModelsFromTrackOptimized(cframeTrack, startPosition, endPosition, positionInterval, startOffset)
+        return self:_BuildModelsFromTrackOptimized(
+            cframeTrack,
+            startPosition,
+            endPosition,
+            positionInterval,
+            startOffset
+        )
     else
         return self:_BuildModelsFromTrack(cframeTrack, startPosition, endPosition, positionInterval, startOffset)
     end

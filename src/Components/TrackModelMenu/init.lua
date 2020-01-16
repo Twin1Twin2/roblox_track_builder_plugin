@@ -19,6 +19,8 @@ local TrackModelMenu = Roact.Component:extend("TrackModelMenu")
 function TrackModelMenu:render()
     local props = self.props
 
+    local trackModelName = props.currentTrackModelState.trackModelName or "[NONE]"
+
     return cE(
         "Frame",
         {
@@ -42,6 +44,21 @@ function TrackModelMenu:render()
                             end)
                         end
                     end;
+                }
+            );
+
+            CurrentTrackModelLabel = cE(
+                "TextLabel",
+                {
+                    Size = UDim2.new(1, 0, 0, 36);
+                    Text = trackModelName;
+
+                    Font = Enum.Font.SourceSans;
+                    TextColor3 = props.TextColor3 or Color3.fromRGB(204, 204, 204);
+                    TextSize = 24;
+
+                    BackgroundColor3 = Color3.fromRGB(50, 50, 50);
+                    BorderSizePixel = 0;
                 }
             );
 

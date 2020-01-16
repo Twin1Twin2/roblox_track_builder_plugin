@@ -6,6 +6,20 @@ local TieModelData = require(script.Parent.TieModelData)
 local CrossbeamModelData = require(script.Parent.CrossbeamModelData)
 
 
+local function CreateModelIntervalData(modelData, positionInterval, startOffset)
+    return {
+        ModelData = modelData;
+        PositionInterval = positionInterval;
+        StartOffset = startOffset;
+    }
+end
+
+
+local function DestroyIntervalData(intervalData)
+    intervalData.ModelData:Destroy()
+end
+
+
 local TrackModelData = {
     ClassName = "TrackModelData";
 }
@@ -72,12 +86,12 @@ function TrackModelData.FromInstanceData(instanceData, name)
         newTrackModelData:AddTieModel(tieModelData, positionInterval, startOffset)
     end
 
-    -- for _, crossbeamModel in pairs(crossbeamModels:GetChildren()) do
-    --     local positionInterval, startOffset = GetIntervalData(crossbeamModel)
-    --     local crossbeamModelData = CrossbeamModelData.FromInstanceData(crossbeamModel)
+    for _, crossbeamModel in pairs(crossbeamModels:GetChildren()) do
+        local positionInterval, startOffset = GetIntervalData(crossbeamModel)
+        local crossbeamModelData = CrossbeamModelData.FromInstanceData(crossbeamModel)
 
-    --     newTrackModelData:AddCrossbeamModel(crossbeamModelData, positionInterval, startOffset)
-    -- end
+        newTrackModelData:AddCrossbeamModel(crossbeamModelData, positionInterval, startOffset)
+    end
 
 
     return newTrackModelData
@@ -85,32 +99,21 @@ end
 
 
 function TrackModelData:Destroy()
-    for _, railModelData in pairs(self.RailModels) do
-        railModelData:Destroy()
+    local function DestroyModelIntervalData(intervalDataTable)
+        for _, intervalData in pairs(intervalDataTable) do
+            DestroyIntervalData(intervalData)
+        end
     end
 
-    for _, tieModelData in pairs(self.TieModels) do
-        tieModelData:Destroy()
-    end
-
-    -- for _, crossbeamModelData in pairs(self.CrossbeamModels) do
-    --     crossbeamModelData:Destroy()
-    -- end
+    DestroyModelIntervalData(self.RailModels)
+    DestroyModelIntervalData(self.TieModels)
+    DestroyModelIntervalData(self.CrossbeamModels)
 
     self.RailModels = nil
     self.TieModels = nil
     self.CrossbeamModels = nil
 
     setmetatable(self, nil)
-end
-
-
-local function CreateModelIntervalData(modelData, positionInterval, startOffset)
-    return {
-        ModelData = modelData;
-        PositionInterval = positionInterval;
-        StartOffset = startOffset;
-    }
 end
 
 
@@ -169,7 +172,7 @@ function TrackModelData:Build(cframeTrack, startPosition, endPosition)
 
     BuildModelsFromIntervalData(self.RailModels)
     BuildModelsFromIntervalData(self.TieModels)
-    -- BuildModelsFromIntervalData(self.CrossbeamModels)
+    BuildModelsFromIntervalData(self.CrossbeamModels)
 
 
     return model

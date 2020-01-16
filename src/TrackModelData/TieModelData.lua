@@ -86,6 +86,13 @@ function TieModelData:SetData(data)
 end
 
 
+function TieModelData:Destroy()
+    self.Model = nil
+
+    setmetatable(self, nil)
+end
+
+
 function TieModelData:Build(cframe, colorData)
     local tieModel = self.Model:Clone()
     local offset = self.Offset
